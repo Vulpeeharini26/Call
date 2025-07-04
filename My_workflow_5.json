@@ -1,0 +1,196 @@
+{
+  "name": "My workflow 5",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 8
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -560,
+        -20
+      ],
+      "id": "959e103e-5b17-428f-9944-0519c7937420",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Appointment description : {{ $json.description }}\n\nStart time :{{ $json.start.dateTime }}\n\nEnd Time:{{ $json.end.dateTime }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are an assistant. Generate  a structured JSON object with following fields;\n\nName : Full name of the recipient.\n\nphone_number :Phone number as a string.\n\nreason : Reason for the appointment \n\nstart_time : start time in ISO 8601 date-time format\n\nend_time: End  time in ISO 8601 date-time format\n \nemail : Email address of the recipent\n\nReturn the output only in valid JSON format. Do not include any additional text or comments ."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        -40,
+        0
+      ],
+      "id": "397b1449-bd20-4f45-9096-29a34f4c3c0f",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-1.5-flash",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -100,
+        280
+      ],
+      "id": "2bc1d1c2-7b8f-4f6c-8b18-133868fdb9f5",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "SfKiNohaLZeQlgTI",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "value": "vulpeharini@gmail.com",
+          "mode": "list",
+          "cachedResultName": "vulpeharini@gmail.com"
+        },
+        "returnAll": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        -340,
+        -20
+      ],
+      "id": "dde6c9d2-735d-4798-aaa7-caa6db8f6985",
+      "name": "Google Calendar",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "dBQqHOzqodjj63MZ",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"name\": {\n      \"type\": \"string\",\n      \"description\": \"Full name of the person\"\n    },\n    \"phone_number\": {\n      \"type\": \"string\",\n      \"description\": \"Phone number of the person\"\n    },\n    \"email\": {\n      \"type\": \"string\",\n      \"description\": \"Email address of the person\"\n    },\n    \"reason\": {\n      \"type\": \"string\",\n      \"description\": \"Reason for the request or submission\"\n    },\n    \"start_time\": {\n      \"type\": \"string\",\n      \"format\": \"date-time\",\n      \"description\": \"Start time in ISO 8601 format\"\n    },\n    \"end_time\": {\n      \"type\": \"string\",\n      \"format\": \"date-time\",\n      \"description\": \"End time in ISO 8601 format\"\n    }\n  },\n  \"required\": [\"name\", \"phone_number\", \"email\", \"reason\", \"start_time\", \"end_time\"]\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        140,
+        220
+      ],
+      "id": "620bf938-36d7-4d12-ba23-7886ad4ef8d0",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "resource": "call",
+        "from": "+1 601 550 6623",
+        "to": "+919110398211",
+        "twiml": true,
+        "message": "=hi {{ $json.output.reason }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.twilio",
+      "typeVersion": 1,
+      "position": [
+        260,
+        -20
+      ],
+      "id": "8464b0a4-dcf0-41b5-8de2-1deb2a3f6abf",
+      "name": "Twilio",
+      "credentials": {
+        "twilioApi": {
+          "id": "yhLCK8e4SxEh3lfm",
+          "name": "Twilio account 2"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Google Calendar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Calendar": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Twilio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "bcc39256-4708-4900-bc9e-d0ddd7aac243",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "788f9c67ebc21dd0f1c2027d93927e6a735b259ec1e20baf33e48f68fe0c23e8"
+  },
+  "id": "v7j8iB8KsUNcB9QM",
+  "tags": []
+}
